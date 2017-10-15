@@ -7,6 +7,26 @@ source $(dirname $0)/notification-config.sh
 source $(dirname $0)/log-config.sh
 source $(dirname $0)/rest-config.sh
 
+sendNotification() {
+    if [ -z "$channel" ];then
+        WARN "Channel not set thus notification won't be send"
+        return
+    fi
+
+    if [ -z "$username" ];then
+        WARN "Username not set thus notification won't be send"
+        return
+    fi
+
+    if [ -z "$webhookUrl" ];then
+        WARN "Channel not set thus notification won't be send"
+        return
+    fi
+
+    DEBUG "Sending notification to channel: ${channel}"
+    curl -X POST --data-urlencode "payload={\"channel\": \"${channel}\", \"username\": \"${username}\", \"text\": \":unicorn_face: Manifest files generated for project: $1 :unicorn_face:\", \"icon_emoji\": \":kingjulien:\"}" ${webhookUrl}
+}
+
 timeNums=$1
 timeUnits=$2
 
@@ -37,8 +57,10 @@ for id in $IDsDone
 do
     INFO "Beginning of pipeline pulling for ${id}"
 
-    output=$($javaPath -jar ${jvmParams} $createManifestJar -p ${id} -o output)
+    output=$($javaPath -jar ${jvmParams} $createManifestJar -p ${id})
     echo "$output" >> $logFile
+
+    sendNotification $id
 
     INFO "End of pipeline pulling for ${id}"
     echo "-----------------------------------------------------" >> $logFile
