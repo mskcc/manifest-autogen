@@ -2,24 +2,29 @@
 
 source /ifs/work/pi/pipelineKickoff/config.sh
 source /ifs/work/pi/lib/bash/b-log.sh
-source $(dirname $0)/constants.sh
-source $(dirname $0)/notification-config.sh
-source $(dirname $0)/log-config.sh
-source $(dirname $0)/rest-config.sh
+
+curDir=$(dirname $0)
+
+source $curDir/constants.sh
+source $curDir/notification-config.sh
+source $curDir/log-config.sh
+source $curDir/rest-config.sh
+
+cd $curDir
 
 sendNotification() {
     if [ -z "$channel" ];then
-        WARN "Channel not set thus notification won't be send"
+        WARN "Channel not set thus notification won't be sent"
         return
     fi
 
     if [ -z "$username" ];then
-        WARN "Username not set thus notification won't be send"
+        WARN "Username not set thus notification won't be sent"
         return
     fi
 
     if [ -z "$webhookUrl" ];then
-        WARN "Channel not set thus notification won't be send"
+        WARN "Channel not set thus notification won't be sent"
         return
     fi
 
@@ -49,7 +54,6 @@ fi
 IFS=$'\n' read -rd ',' -a ids <<< "$IDsDone"
 INFO "Delivered projects: ${ids[*]}"
 
-cd $createManifestPath
 createManifestJar=${createManifestPath}/pipeline-kickoff-${version}.jar
 INFO "Create Manifest path: ${createManifestJar}"
 
@@ -57,7 +61,7 @@ for id in $IDsDone
 do
     INFO "Beginning of pipeline pulling for ${id}"
 
-    output=$($javaPath -jar ${jvmParams} $createManifestJar -p ${id})
+    output=$($javaPath -jar ${jvmParams} $createManifestJar -p ${id} ${manifestArgs})
     echo "$output" >> $logFile
 
     sendNotification $id
@@ -65,7 +69,5 @@ do
     INFO "End of pipeline pulling for ${id}"
     echo "-----------------------------------------------------" >> $logFile
 done
-
-cd $curDir
 
 

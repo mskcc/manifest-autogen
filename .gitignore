@@ -12,7 +12,13 @@ Thumbs.db
 ##### Host/server/usernames/passwords files ####
 Connect.txt
 constants.*
+notification-config.sh
 
+.idea
+
+logs
+log*
+!log-config.sh
 
 *.pyc
 
