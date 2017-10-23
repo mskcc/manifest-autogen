@@ -12,6 +12,17 @@ source $curDir/rest-config.sh
 
 cd $curDir
 
+getFileStatus() {
+    if [ ! -f ${outputPath}/Proj_${1}/${2} ]; then
+	fileStatus+=$"\n\t :error:"
+    else
+	fileStatus+=$"\n\t :success:"
+    fi
+
+    fileStatus+=${2}
+    echo "$fileStatus"
+}
+
 sendNotification() {
     if [ -z "$channel" ];then
         WARN "Channel not set thus notification won't be sent"
@@ -28,8 +39,15 @@ sendNotification() {
         return
     fi
 
+    filesStatus=$(getFileStatus $1 "Proj_${1}_sample_mapping.txt")	
+    filesStatus+=$(getFileStatus $1 "Proj_${1}_sample_pairing.txt")	
+    filesStatus+=$(getFileStatus $1 "Proj_${1}_sample_grouping.txt")	
+    filesStatus+=$(getFileStatus $1 "Proj_${1}_request.txt")	
+
+    text=":boom: Manifest files generated for project: *${1}* :boom: ${filesStatus}"
+
     DEBUG "Sending notification to channel: ${channel}"
-    curl -X POST --data-urlencode "payload={\"channel\": \"${channel}\", \"username\": \"${username}\", \"text\": \":unicorn_face: Manifest files generated for project: $1 :unicorn_face:\", \"icon_emoji\": \":kingjulien:\"}" ${webhookUrl}
+    curl -X POST --data-urlencode "payload={\"channel\": \"${channel}\", \"username\": \"${username}\", \"text\": \"${text}\", \"icon_emoji\": \":kingjulien:\"}" ${webhookUrl}
 }
 
 timeNums=$1
