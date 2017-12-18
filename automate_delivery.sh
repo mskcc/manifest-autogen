@@ -13,13 +13,13 @@ source $curDir/rest-config.sh
 cd $curDir
 
 getFileStatus() {
-    if [ ! -f ${outputPath}/Proj_${1}/${2} ]; then
+    if [ ! -f $1/Proj_${2}/${3} ]; then
 	fileStatus+=$"\n\t :error:"
     else
 	fileStatus+=$"\n\t :success:"
     fi
 
-    fileStatus+=${2}
+    fileStatus+=${3}
     echo "$fileStatus"
 }
 
@@ -39,12 +39,12 @@ sendNotification() {
         return
     fi
 
-    filesStatus=$(getFileStatus $1 "Proj_${1}_sample_mapping.txt")	
-    filesStatus+=$(getFileStatus $1 "Proj_${1}_sample_pairing.txt")	
-    filesStatus+=$(getFileStatus $1 "Proj_${1}_sample_grouping.txt")	
-    filesStatus+=$(getFileStatus $1 "Proj_${1}_request.txt")	
+    filesStatus=$(getFileStatus $1 $2 "Proj_${2}_sample_mapping.txt")	
+    filesStatus+=$(getFileStatus $1 $2 "Proj_${2}_sample_pairing.txt")	
+    filesStatus+=$(getFileStatus $1 $2 "Proj_${2}_sample_grouping.txt")	
+    filesStatus+=$(getFileStatus $1 $2 "Proj_${2}_request.txt")	
 
-    text=":boom: Manifest files generated for project: *${1}* :boom: ${filesStatus}"
+    text=":boom: $3 Manifest files generated for project: *${2}* in path: ${1} :boom: ${filesStatus}"
 
     DEBUG "Sending notification to channel: ${channel}"
     curl -X POST --data-urlencode "payload={\"channel\": \"${channel}\", \"username\": \"${username}\", \"text\": \"${text}\", \"icon_emoji\": \":kingjulien:\"}" ${webhookUrl}
@@ -72,20 +72,33 @@ fi
 IFS=$'\n' read -rd ',' -a ids <<< "$IDsDone"
 INFO "Delivered projects: ${ids[*]}"
 
-createManifestJar=${createManifestPath}/pipeline-kickoff-${version}.jar
-INFO "Create Manifest path: ${createManifestJar}"
+bicCreateManifestJar=${createManifestPath}/pipeline-kickoff-${bicVersion}.jar
+roslinCreateManifestJar=${createManifestPath}/pipeline-kickoff-${roslinVersion}.jar
+INFO "BIC Create Manifest path: ${bicCreateManifestJar}"
+INFO "ROSLIN Create Manifest path: ${roslinCreateManifestJar}"
 
 for id in $IDsDone
 do
-    INFO "Beginning of pipeline pulling for ${id}"
+    INFO "BIC Beginning of pipeline pulling for ${id}"
 
-    output=$($javaPath -jar ${jvmParams} $createManifestJar -p ${id} ${manifestArgs})
+    output=$($javaPath -jar ${jvmParams} $bicCreateManifestJar -p ${id} ${manifestArgs})
     echo "$output" >> $logFile
 
-    sendNotification $id
+    sendNotification $bicOutputPath $id "BIC"
 
-    INFO "End of pipeline pulling for ${id}"
+    INFO "BIC End of pipeline pulling for ${id}"
     echo "-----------------------------------------------------" >> $logFile
+
+    INFO "ROSLIN Beginning of pipeline pulling for ${id}"
+
+    output=$($javaPath -jar ${jvmParams} $roslinCreateManifestJar -p ${id} ${manifestArgs})
+    echo "$output" >> $logFile
+
+    sendNotification $roslinOutputPath $id "ROSLIN"
+
+    INFO "ROSLIN End of pipeline pulling for ${id}"
+    echo "-----------------------------------------------------" >> $logFile
+
 done
 
 
