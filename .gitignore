@@ -10,7 +10,9 @@ ehthumbs.db
 Thumbs.db
 
 ##### Host/server/usernames/passwords files ####
-Connect.txt
+Connect*.txt
+application*.properties
+
 constants.*
 notification-config.sh
 
